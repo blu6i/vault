@@ -30,6 +30,7 @@ help:
 	@echo "make migrate-down — откатить последнюю миграцию (alembic downgrade -1)"
 	@echo "make sh           — bash в контейнере приложения"
 	@echo "make psql         — консоль psql к postgres"
+	@echo "make gen_secret   — генератор секрета"
 
 .PHONY: init
 init:
@@ -123,3 +124,7 @@ sh:
 .PHONY: psql
 psql:
 	docker compose exec postgres psql -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-app}
+
+.PHONY: gen_secret
+gen_secret:
+	python -c "import secrets; print(secrets.token_urlsafe(32))"

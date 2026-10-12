@@ -12,7 +12,7 @@ class JWTToken(BaseModel):
 
     secret_key: str
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60 * 24
+    access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 30
 
 
@@ -104,7 +104,7 @@ class Password(BaseModel):
     """Безопасность паролей."""
 
     pepper: str
-    min_length: int = 8
+    min_length: int = 12
 
 
 class Settings(BaseSettings):
@@ -116,8 +116,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "my-python-app"
+    app_name: str = "vault"
     debug: bool = False
+    app_env: str = "dev"
 
     db: DBSettings
     log: LogSettings = LogSettings()

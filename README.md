@@ -1,70 +1,86 @@
-# Production-Ready Backend Template (Python + FastAPI)
+# 🛡️ Vault
 
-Шаблон асинхронного бэкенда на базе **Python 3.13+**, **FastAPI**, **SQLAlchemy 2.0 (asyncpg)**, **PostgreSQL 18**, **Redis 7**, **Nginx** и менеджера пакетов **uv**.
+Сервис аутентификации, авторизации и управления пользователями на базе **Python 3.14**, **FastAPI**, **GraphQL** и **OAuth2/OIDC**.
 
 ---
 
-## Быстрый старт
+## 🛠 Стек технологий
+
+* **Backend:** Python 3.14, FastAPI, Uvicorn, uv
+* **API:** GraphQL (Ariadne) & REST
+* **База данных:** PostgreSQL 18 (SQLAlchemy 2.0, asyncpg, Alembic)
+* **Кэш и сессии:** Redis 7
+* **Веб-интерфейс:** SSR (Jinja2)
+* **Линтинг и тесты:** Ruff, Pytest
+
+---
+
+## 🚀 Быстрый старт
+
+Запуск проекта одной командой:
 
 ```bash
 make init && make up && make sync && make migrate
 ```
 
-1. `make init` — создаёт `.env` с UID/GID текущего пользователя хоста.
+1. `make init` — создаёт `.env` файл из `.env.example`.
 2. `make up` — собирает и запускает контейнеры в фоне.
-3. `make sync` — синхронизирует Python-зависимости через `uv sync`.
-4. `make migrate` — применяет миграции Alembic к PostgreSQL.
+3. `make sync` — синхронизирует Python-зависимости.
+4. `make migrate` — применяет миграции базы данных.
 
-После запуска:
-- **API & Healthcheck**: http://127.0.0.1:8080/health
-- **Swagger Docs**: http://127.0.0.1:8080/docs *(доступен при `DEBUG=true`)*
-- **PostgreSQL**: `127.0.0.1:5432` *(логин `admin`, пароль из `.env`)*
-- **Redis**: `127.0.0.1:6379` *(пароль из `.env`)*
-
----
-
-## Основные команды Makefile
-
-### Управление контейнерами
-- `make up` / `make down` — запуск / остановка сервисов.
-- `make restart` — быстрый перезапуск.
-- `make ps` — статус запущенных контейнеров.
-- `make logs` — просмотр логов всех сервисов (`make logs service=app`).
-- `make sh` — вход в bash-терминал контейнера приложения.
-- `make psql` — вход в интерактивную консоль PostgreSQL.
-- `make clean` — полная очистка (`down -v` с удалением БД).
-
-### Разработка и качество кода
-- `make sync` — установка/обновление библиотек (`uv sync`).
-- `make lock` — фиксация дерева зависимостей в `uv.lock`.
-- `make lint` — проверка линтером Ruff.
-- `make format` — автоформатирование и автофиксы (Ruff).
-
-### База данных и миграции (Alembic)
-- `make migrate` — применить миграции (`alembic upgrade head`).
-- `make migration msg="описание"` — сгенерировать новую ревизию с автогенерацией.
-- `make migrate-down` — откатить последнюю миграцию (`downgrade -1`).
-
-### Тестирование (Pytest)
-- `make test-db-init` — создать тестовую БД `app_test` и применить к ней миграции.
-- `make test` — запустить тесты (требует предварительного вызова `make test-db-init`).
+### Доступные адреса
+* **Healthcheck:** [http://127.0.0.1:8080/health](http://127.0.0.1:8080/health)
+* **API Docs (Swagger):** [http://127.0.0.1:8080/docs](http://127.0.0.1:8080/docs)
+* **GraphQL Playground:** [http://127.0.0.1:8080/graphql](http://127.0.0.1:8080/graphql)
+* **PostgreSQL:** `127.0.0.1:5432`
+* **Redis:** `127.0.0.1:6379`
 
 ---
 
-## Архитектура проекта
+## 📋 Основные команды (Makefile)
+
+### Контейнеры
+* `make up` / `make down` — запуск / остановка контейнеров.
+* `make restart` — быстрый перезапуск.
+* `make logs` — просмотр логов (`make logs service=app`).
+* `make sh` — вход в терминал контейнера приложения.
+* `make psql` — консоль PostgreSQL.
+* `make clean` — остановка и удаление контейнеров вместе с томами БД.
+
+### Разработка и зависимости
+* `make sync` — установка/синхронизация библиотек (`uv sync`).
+* `make lock` — обновление `uv.lock`.
+* `make lint` — проверка линтером Ruff.
+* `make format` — автоформатирование кода.
+
+### Миграции (Alembic)
+* `make migrate` — применить миграции к БД.
+* `make migration msg="описание"` — создать новую миграцию.
+* `make migrate-down` — откатить последнюю миграцию.
+
+### Тестирование
+* `make test-db-init` — создать тестовую БД и применить миграции.
+* `make test` — запустить тесты (Pytest).
+
+---
+
+## 📁 Структура проекта
 
 ```text
-├── docker/             # Dockerfile (python + uv, nginx, postgres)
-├── migrations/         # Миграции Alembic (асинхронный env.py)
+├── docker/                 # Конфигурации Dockerfile (app, nginx, postgres)
+├── migrations/             # Миграции схемы БД Alembic
 ├── src/
-│   ├── api/            # Эндпоинты (v1) и зависимости (deps.py)
-│   ├── core/           # Конфигурация (Pydantic Settings), БД, Redis, JWT/Argon2, Loguru
-│   ├── models/         # ORM-модели SQLAlchemy 2.0 (DeclarativeBase)
-│   ├── schemas/        # DTO схемы Pydantic v2
-│   ├── services/       # Бизнес-логика приложения
-│   └── main.py         # Входная точка FastAPI (lifespan, CORS, health)
-├── tests/              # Интеграционные тесты с реальным Postgres/Redis
-├── compose.yaml        # Оркестрация сервисов
-├── Makefile            # Автоматизация команд
-└── pyproject.toml      # Зависимости и настройки линтеров (Ruff, Pytest)
+│   ├── api/                # REST-эндпоинты и зависимости
+│   ├── core/               # Конфигурация, клиенты БД/Redis, безопасность
+│   ├── graphql/            # Схема и резолверы GraphQL
+│   ├── models/             # ORM-модели базы данных
+│   ├── schemas/            # Pydantic DTO схемы
+│   ├── services/           # Бизнес-логика
+│   ├── web/                # SSR веб-интерфейс (шаблоны Jinja2, статика)
+│   └── main.py             # Точка входа FastAPI
+├── tests/                  # Тесты
+├── compose.yaml            # Docker Compose
+├── Makefile                # Команды автоматизации
+├── pyproject.toml          # Зависимости и конфигурации утилит
+└── ROADMAP.md              # Дорожная карта реализации по лабораторным работам
 ```
