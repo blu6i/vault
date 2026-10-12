@@ -35,4 +35,4 @@ USER app
 EXPOSE 8000
 
 # Запуск Uvicorn в режиме dev (--reload)
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
