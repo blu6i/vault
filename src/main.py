@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 from src.api.v1.auth import router as auth_router
@@ -55,6 +56,7 @@ app = FastAPI(
 
 app.include_router(auth_router)
 app.mount("/graphql", graphql_app)
+app.mount("/admin", StaticFiles(directory="src/static", html=True), name="admin")
 
 # Настройка CORS
 app.add_middleware(
