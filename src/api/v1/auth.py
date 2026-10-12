@@ -4,7 +4,7 @@ import asyncio
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from src.api.deps import CurrentUser, SessionDep
+from src.api.deps import CurrentUser, SessionDep, extract_client_info
 from src.core.exceptions import AlreadyExistsException
 from src.core.security import create_access_token, hash_password, verify_password
 from src.repositories import (
@@ -15,20 +15,6 @@ from src.repositories import (
 from src.schemas import TokenResponse, UserLogin, UserRead, UserRegister
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-
-
-def extract_client_info(request: Request) -> tuple[str | None, str | None]:
-    """Извлекает IP-адрес клиента и User-Agent из HTTP-запроса."""
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        ip = forwarded_for.split(",")[0].strip()
-    elif real_ip := request.headers.get("x-real-ip"):
-        ip = real_ip.strip()
-    else:
-        ip = request.client.host if request.client else None
-
-    user_agent = request.headers.get("user-agent")
-    return ip, user_agent
 
 
 @router.post(

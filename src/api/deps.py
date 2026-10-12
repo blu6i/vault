@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +17,20 @@ BearerCredentials = Annotated[
     HTTPAuthorizationCredentials | None,
     Depends(bearer_scheme),
 ]
+
+
+def extract_client_info(request: Request) -> tuple[str | None, str | None]:
+    """Извлекает IP-адрес клиента и User-Agent из HTTP-запроса."""
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        ip = forwarded_for.split(",")[0].strip()
+    elif real_ip := request.headers.get("x-real-ip"):
+        ip = real_ip.strip()
+    else:
+        ip = request.client.host if request.client else None
+
+    user_agent = request.headers.get("user-agent")
+    return ip, user_agent
 
 
 async def get_current_user(session: SessionDep, auth: BearerCredentials) -> User:
@@ -60,3 +74,16 @@ async def get_current_user(session: SessionDep, auth: BearerCredentials) -> User
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def get_current_admin(current_user: CurrentUser) -> User:
+    """Проверяет, обладает ли текущий пользователь правами администратора."""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_user
+
+
+CurrentAdmin = Annotated[User, Depends(get_current_admin)]

@@ -12,6 +12,7 @@ from src.core.config import settings
 from src.core.logging import setup_logging
 from src.core.postgres_client import async_db
 from src.core.redis_client import async_redis
+from src.graphql.schema import graphql_app
 
 
 @asynccontextmanager
@@ -53,6 +54,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.mount("/graphql", graphql_app)
 
 # Настройка CORS
 app.add_middleware(

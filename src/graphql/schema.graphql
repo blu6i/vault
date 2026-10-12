@@ -1,0 +1,101 @@
+# Directives
+directive @isAuthenticated on FIELD_DEFINITION
+directive @isAdmin on FIELD_DEFINITION
+
+# Custom Scalars
+scalar DateTime
+scalar JSON
+
+# Core Types
+type User {
+  id: ID!
+  email: String!
+  isActive: Boolean!
+  isAdmin: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+type Client {
+  id: ID!
+  clientId: String!
+  name: String!
+  clientName: String!
+  isConfidential: Boolean!
+  redirectUris: [String!]!
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+type AuditEvent {
+  id: ID!
+  eventType: String!
+  actorId: Int
+  clientId: String
+  ip: String
+  userAgent: String
+  metadata: JSON
+  createdAt: DateTime!
+}
+
+type AuthPayload {
+  accessToken: String!
+  tokenType: String!
+}
+
+# Mutation Inputs
+input CreateClientInput {
+  name: String!
+  isConfidential: Boolean = false
+  redirectUris: [String!] = []
+}
+
+# Queries
+type Query {
+  """
+  Возвращает профиль текущего аутентифицированного пользователя.
+  """
+  me: User! @isAuthenticated
+
+  """
+  Возвращает список пользователей системы (только для администраторов).
+  """
+  users(search: String, limit: Int = 20, offset: Int = 0): [User!]! @isAdmin
+
+  """
+  Возвращает список всех зарегистрированных OAuth-клиентов (только для администраторов).
+  """
+  clients: [Client!]! @isAdmin
+
+  """
+  Возвращает журнал событий безопасности с фильтрацией (только для администраторов).
+  """
+  auditEvents(
+    eventType: String
+    limit: Int = 50
+    offset: Int = 0
+  ): [AuditEvent!]! @isAdmin
+}
+
+# Mutations
+type Mutation {
+  """
+  Регистрация нового пользователя через GraphQL.
+  """
+  registerUser(email: String!, password: String!): AuthPayload!
+
+  """
+  Создание нового OAuth-клиента. Поддерживает как позиционные аргументы, так и объект input.
+  """
+  createClient(
+    name: String
+    isConfidential: Boolean = false
+    redirectUris: [String!] = []
+    input: CreateClientInput
+  ): Client! @isAdmin
+
+  """
+  Деактивация пользователя по ID (только для администраторов).
+  """
+  disableUser(userId: ID): User! @isAdmin
+}
