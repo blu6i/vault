@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
+from src.api.v1.auth import router as auth_router
 from src.core.config import settings
 from src.core.logging import setup_logging
 from src.core.postgres_client import async_db
@@ -50,6 +51,8 @@ app = FastAPI(
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
 )
+
+app.include_router(auth_router)
 
 # Настройка CORS
 app.add_middleware(
