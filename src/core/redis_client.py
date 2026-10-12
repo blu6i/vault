@@ -20,6 +20,19 @@ class RedisDatabase:
         password: str | None = None,
         prefix: str = "",
     ) -> None:
+        """
+        Инициализирует клиент Redis и настраивает подключение с префиксом ключей.
+
+        Args:
+        host (str): Адрес Redis-сервера, к которому будет выполняться подключение.
+        port (int): Порт Redis-сервера.
+        db (int, optional): Номер Redis-базы данных. По умолчанию 0.
+        password (str | None, optional): Пароль для подключения к Redis. Если не указан,
+            используется без аутентификации. По умолчанию None.
+        prefix (str, optional): Префикс для всех ключей, чтобы изолировать данные в рамках
+            приложения. По умолчанию "".
+
+        """
         self.prefix = prefix
         self._pool: redis.ConnectionPool = redis.ConnectionPool(
             host=host,
@@ -76,9 +89,7 @@ class RedisDatabase:
     async def keys(self, pattern: str = "*") -> list[str]:
         """Безопасный поиск ключей через SCAN (не блокирует Redis сервер)."""
         keys_list: list[str] = []
-        async for key in self._client.scan_iter(
-            match=self._full_key(pattern), count=100
-        ):
+        async for key in self._client.scan_iter(match=self._full_key(pattern), count=100):
             keys_list.append(key)
         return keys_list
 

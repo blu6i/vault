@@ -1,13 +1,13 @@
 """Хэширование паролей и проверка политики их стойкости."""
 
-from collections.abc import Sequence
-from datetime import datetime, timedelta, timezone
-from typing import Any
 import uuid
+from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
+import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerificationError
-import jwt
 from zxcvbn import zxcvbn
 
 from src.core.config import settings
@@ -42,7 +42,8 @@ def validate_policy(
     password: str,
     user_inputs: Sequence[str] | None = None,
 ) -> None:
-    """Проверяет минимальную длину и оценку стойкости пароля по алгоритму zxcvbn.
+    """
+    Проверяет минимальную длину и оценку стойкости пароля по алгоритму zxcvbn.
 
     Args:
         password: Сырой пароль пользователя.
@@ -84,7 +85,7 @@ def create_token(
     additional_claims: dict[str, Any] | None = None,
 ) -> str:
     """Базовая фабрика для создания подписанных JWT токенов."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": str(subject),
         "type": token_type,
@@ -137,4 +138,3 @@ def decode_token(token: str) -> dict[str, Any]:
         settings.jwt.secret_key,
         algorithms=[settings.jwt.algorithm],
     )
-

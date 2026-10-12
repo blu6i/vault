@@ -9,9 +9,22 @@ from src.core.config import settings
 
 
 class InterceptHandler(logging.Handler):
-    """Перехватывает стандартные логи logging (Uvicorn, FastAPI, SQLAlchemy) и направляет в Loguru."""
+    """
+    Перехват логов.
+
+    Перехватывает стандартные логи logging (Uvicorn, FastAPI, SQLAlchemy)
+    и направляет их в Loguru.
+    """
 
     def emit(self, record: logging.LogRecord) -> None:
+        """
+        Перехватывает запись логирования из стандартного logging и отправляет её в Loguru.
+
+        Args:
+        record (logging.LogRecord): Объект записи журнала, созданный библиотекой
+            logging, содержащий уровень, сообщение, исключение и метаданные события.
+
+        """
         try:
             level = logger.level(record.levelname).name
         except ValueError:
@@ -22,9 +35,7 @@ class InterceptHandler(logging.Handler):
             frame = frame.f_back
             depth += 1
 
-        logger.opt(depth=depth, exception=record.exc_info).log(
-            level, record.getMessage()
-        )
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
 def setup_logging() -> None:

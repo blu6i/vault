@@ -10,8 +10,8 @@ ARG GID=1000
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    UV_SYSTEM_PYTHON=1 \
-    PATH="/app/.venv/bin:$PATH"
+    UV_PROJECT_ENVIRONMENT="/home/app/.venv" \
+    PATH="/home/app/.venv/bin:$PATH"
 
 # Системные утилиты (curl для healthcheck, procps)
 RUN apt-get update && apt-get install -y --no-install-recommends \
