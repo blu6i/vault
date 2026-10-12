@@ -43,32 +43,9 @@
 
     header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .badge-logo {
-      background: linear-gradient(135deg, #4f46e5, #06b6d4);
-      color: white;
-      padding: 0.35rem 0.65rem;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      letter-spacing: 0.05em;
-    }
-
-    h1 {
-      font-size: 1.35rem;
-      font-weight: 600;
+      margin-bottom: 1.25rem;
     }
 
     /* 2-колоночный CSS Grid */
@@ -77,6 +54,10 @@
       grid-template-columns: 320px 1fr;
       gap: 1.5rem;
       align-items: start;
+    }
+
+    .grid.auth-mode {
+      grid-template-columns: 1fr;
     }
 
     @media (max-width: 768px) {
@@ -501,10 +482,6 @@
 <body>
   <div class="container">
     <header>
-      <div class="brand">
-        <span class="badge-logo">VAULT</span>
-        <h1>Admin Dashboard</h1>
-      </div>
       <div id="userHeader" class="hidden user-header">
         <span id="userEmail" style="color: var(--text-muted); font-size: 0.875rem;"></span>
         <button id="logoutBtn" class="btn btn-danger">Выйти</button>
@@ -515,36 +492,24 @@
       <div id="alertBox" class="alert"></div>
     </div>
 
-    <div class="grid">
-      <!-- Колонка 1: Блок аутентификации -->
-      <section class="card">
-        <div id="loginBlock">
-          <h2>Вход</h2>
-          <form id="loginForm">
-            <div class="form-group">
-              <label for="loginEmail">Email</label>
-              <input type="email" id="loginEmail" required placeholder="admin@example.com">
-            </div>
-            <div class="form-group">
-              <label for="loginPassword">Пароль</label>
-              <input type="password" id="loginPassword" required placeholder="••••••••">
-            </div>
-            <button type="submit" class="btn btn-primary">Войти</button>
-          </form>
-        </div>
-
-        <div id="profileBlock" class="hidden">
-          <h2>Сессия активна</h2>
-          <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">
-            Вы вошли как <strong id="profileEmail" style="color: var(--text);"></strong>
-          </p>
-          <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-            GraphQL-запросы отправляются с заголовком <br><code>Authorization: Bearer &lt;token&gt;</code>
-          </p>
-        </div>
+    <div id="mainGrid" class="grid">
+      <!-- Блок аутентификации -->
+      <section id="loginCard" class="card">
+        <h2>Вход</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" required placeholder="admin@example.com">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Пароль</label>
+            <input type="password" id="loginPassword" required placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn btn-primary">Войти</button>
+        </form>
       </section>
 
-      <!-- Колонка 2: Таблица клиентов и создание -->
+      <!-- Блок OAuth-клиентов -->
       <section class="card">
         <div class="table-header">
           <h2>OAuth-клиенты</h2>
@@ -637,6 +602,6 @@
     </div>
   </div>
 
-  <script src="/admin/app.js?v=3"></script>
+  <script src="/admin/app.js?v=5"></script>
 </body>
 </html>

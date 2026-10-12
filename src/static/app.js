@@ -53,9 +53,8 @@ async function gql(query, variables = {}) {
 // Инициализация при полной загрузке DOM
 document.addEventListener("DOMContentLoaded", () => {
   const alertBox = document.getElementById("alertBox");
-  const loginBlock = document.getElementById("loginBlock");
-  const profileBlock = document.getElementById("profileBlock");
-  const profileEmail = document.getElementById("profileEmail");
+  const mainGrid = document.getElementById("mainGrid");
+  const loginCard = document.getElementById("loginCard");
   const userHeader = document.getElementById("userHeader");
   const userEmail = document.getElementById("userEmail");
   const loginForm = document.getElementById("loginForm");
@@ -66,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const guestNotice = document.getElementById("guestNotice");
 
   let alertTimeout = null;
+  let currentUser = null;
 
   function showAlert(message, type = "error") {
     if (alertTimeout) clearTimeout(alertTimeout);
@@ -76,14 +76,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 5000);
   }
 
-  function toggleAuth(isAuth, email = "") {
-    if (isAuth) {
-      loginBlock.classList.add("hidden");
-      profileBlock.classList.remove("hidden");
-      profileEmail.textContent = email;
+  function toggleAuth(isAuth, user = null) {
+    currentUser = isAuth ? user : null;
+    if (isAuth && user) {
+      if (loginCard) loginCard.classList.add("hidden");
+      if (mainGrid) mainGrid.classList.add("auth-mode");
 
+      const roleText = user.isAdmin ? "Администратор" : "Пользователь";
       userHeader.classList.remove("hidden");
-      userEmail.textContent = email;
+      userEmail.textContent = `${user.email} (${roleText})`;
 
       clientsBlock.classList.remove("hidden");
       createClientBtn.classList.remove("hidden");
@@ -91,9 +92,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       loadClients();
     } else {
-      loginBlock.classList.remove("hidden");
-      profileBlock.classList.add("hidden");
-      profileEmail.textContent = "";
+      currentUser = null;
+      if (loginCard) loginCard.classList.remove("hidden");
+      if (mainGrid) mainGrid.classList.remove("auth-mode");
 
       userHeader.classList.add("hidden");
       userEmail.textContent = "";
@@ -108,6 +109,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadClients() {
     try {
+      if (!currentUser || !currentUser.isAdmin) {
+        clientsTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+              Просмотр и создание OAuth-клиентов доступны только администраторам.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
       clientsTableBody.innerHTML = `
         <tr>
           <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
@@ -191,9 +203,21 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error("Токен авторизации не получен от сервера");
         }
         localStorage.setItem(TOKEN_KEY, res.access_token);
-        toggleAuth(true, email);
+
+        // Получаем информацию о пользователе и его роли
+        const meData = await gql(`
+          query {
+            me {
+              id
+              email
+              isAdmin
+            }
+          }
+        `);
+        const user = (meData && meData.me) ? meData.me : { email, isAdmin: false };
+        toggleAuth(true, user);
         showAlert("Вход выполнен успешно", "success");
-        console.log("[Vault Admin] Вход успешен!");
+        console.log("[Vault Admin] Вход успешен!", user);
       } catch (err) {
         console.error("[Vault Admin] Ошибка входа:", err);
         showAlert(err.message, "error");
@@ -302,6 +326,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (createClientBtn) {
     createClientBtn.addEventListener("click", () => {
+      if (!currentUser || !currentUser.isAdmin) {
+        showAlert("Ошибка: только администраторы могут создавать клиентов", "error");
+        return;
+      }
       openCreateClientModal();
     });
   }
@@ -369,6 +397,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (createClientModalForm) {
     createClientModalForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!currentUser || !currentUser.isAdmin) {
+        showAlert("Ошибка: только администраторы могут создавать клиентов", "error");
+        return;
+      }
+
       const name = modalClientName ? modalClientName.value.trim() : "";
       const isConfidential = modalIsConfidential ? modalIsConfidential.checked : false;
 
@@ -433,12 +466,13 @@ document.addEventListener("DOMContentLoaded", () => {
           me {
             id
             email
+            isAdmin
           }
         }
       `);
       if (data && data.me) {
-        console.log("[Vault Admin] Сессия успешно подтверждена:", data.me.email);
-        toggleAuth(true, data.me.email);
+        console.log("[Vault Admin] Сессия успешно подтверждена:", data.me);
+        toggleAuth(true, data.me);
       } else {
         console.warn("[Vault Admin] Токен недействителен, сброс");
         localStorage.removeItem(TOKEN_KEY);
