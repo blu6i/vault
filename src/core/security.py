@@ -5,9 +5,9 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerificationError
+from jose import jwt
 from zxcvbn import zxcvbn
 
 from src.core.config import settings
