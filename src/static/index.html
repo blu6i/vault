@@ -175,12 +175,41 @@
       color: white;
     }
 
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--border);
+      color: var(--text);
+    }
+
+    /* Подготовленное место для уведомлений, чтобы не сдвигать интерфейс */
+    .alert-container {
+      min-height: 48px;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+    }
+
     .alert {
+      width: 100%;
       padding: 0.75rem 1rem;
       border-radius: 6px;
-      margin-bottom: 1.25rem;
       font-size: 0.85rem;
-      display: none;
+      display: block;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    }
+
+    .alert.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
 
     .alert-error {
@@ -193,6 +222,197 @@
       background-color: rgba(16, 185, 129, 0.1);
       border: 1px solid rgba(16, 185, 129, 0.3);
       color: #6ee7b7;
+    }
+
+    /* Модальные окна */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(3, 7, 18, 0.75);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.25rem;
+    }
+
+    .modal-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 520px;
+      padding: 1.75rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-card-sm {
+      max-width: 420px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h3, .modal-header h4 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      transition: color 0.15s ease;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Чекбокс */
+    .checkbox-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .checkbox-container input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    .field-hint {
+      margin-top: 0.35rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .field-error {
+      color: #fca5a5;
+      font-size: 0.8rem;
+      margin-top: 0.35rem;
+      display: block;
+    }
+
+    /* Список Redirect URIs */
+    .uris-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .uris-container {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem;
+      min-height: 54px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .uris-empty {
+      color: var(--text-muted);
+      font-size: 0.825rem;
+      text-align: center;
+      padding: 0.5rem 0;
+    }
+
+    .uris-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .uri-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 0.4rem 0.65rem;
+      border-radius: 5px;
+    }
+
+    .uri-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.825rem;
+      color: #a5b4fc;
+      word-break: break-all;
+    }
+
+    .btn-circle {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-circle-add {
+      background-color: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-circle-add:hover {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-circle-remove {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+
+    .btn-circle-remove:hover {
+      background-color: var(--danger);
+      color: #ffffff;
     }
 
     /* Таблица */
@@ -267,6 +487,12 @@
       font-size: 0.9rem;
     }
 
+    .user-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -279,13 +505,15 @@
         <span class="badge-logo">VAULT</span>
         <h1>Admin Dashboard</h1>
       </div>
-      <div id="userHeader" class="hidden" style="display: flex; align-items: center; gap: 1rem;">
+      <div id="userHeader" class="hidden user-header">
         <span id="userEmail" style="color: var(--text-muted); font-size: 0.875rem;"></span>
         <button id="logoutBtn" class="btn btn-danger">Выйти</button>
       </div>
     </header>
 
-    <div id="alertBox" class="alert"></div>
+    <div class="alert-container">
+      <div id="alertBox" class="alert"></div>
+    </div>
 
     <div class="grid">
       <!-- Колонка 1: Блок аутентификации -->
@@ -345,6 +573,70 @@
     </div>
   </div>
 
-  <script src="/admin/app.js"></script>
+  <!-- Модальное окно создания клиента -->
+  <div id="createClientModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Новый OAuth-клиент</h3>
+        <button type="button" id="closeClientModalXBtn" class="modal-close" title="Закрыть">&times;</button>
+      </div>
+      <form id="createClientModalForm">
+        <div class="form-group">
+          <label for="modalClientName">Имя клиента *</label>
+          <input type="text" id="modalClientName" required placeholder="Например, Single Page Application">
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-container">
+            <input type="checkbox" id="modalIsConfidential">
+            <span>Конфиденциальный клиент (Confidential)</span>
+          </label>
+          <p class="field-hint">
+            Отметьте, если клиент работает на защищённом бэкенде с client_secret. Оставьте выключенным для Public (SPA, мобильные приложения).
+          </p>
+        </div>
+
+        <div class="form-group">
+          <div class="uris-header">
+            <label>Redirect URIs (ссылки перенаправления)</label>
+            <button type="button" id="openAddUriPromptBtn" class="btn-circle btn-circle-add" title="Добавить ссылку">+</button>
+          </div>
+          <div class="uris-container">
+            <div id="urisEmptyMsg" class="uris-empty">Ссылки пока не добавлены. Нажмите «+», чтобы добавить URI.</div>
+            <div id="urisList" class="uris-list"></div>
+          </div>
+          <p class="field-hint">Разрешённые URL обратного вызова (OAuth2 Redirect URI).</p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="cancelClientModalBtn" class="btn btn-secondary">Отмена</button>
+          <button type="submit" class="btn btn-primary" style="width: auto;">Создать клиента</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Всплывающее окно ввода ссылки (Prompt) -->
+  <div id="uriPromptModal" class="modal-backdrop hidden" style="z-index: 1100;">
+    <div class="modal-card modal-card-sm">
+      <div class="modal-header">
+        <h4>Добавить Redirect URI</h4>
+        <button type="button" id="closeUriPromptXBtn" class="modal-close" title="Закрыть">&times;</button>
+      </div>
+      <form id="uriPromptForm">
+        <div class="form-group" style="margin-top: 0.5rem;">
+          <label for="promptUriInput">URL перенаправления *</label>
+          <input type="text" id="promptUriInput" placeholder="http://localhost:3000/callback" autocomplete="off">
+          <span id="promptUriError" class="field-error hidden"></span>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancelUriPromptBtn" class="btn btn-secondary">Отмена</button>
+          <button type="submit" class="btn btn-primary" style="width: auto;">Добавить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/admin/app.js?v=3"></script>
 </body>
 </html>

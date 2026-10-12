@@ -1,8 +1,8 @@
-// app.js: Минималистичный клиент для админки (REST + GraphQL)
+// app.js: Клиент для панели администратора (REST + GraphQL)
 
 const TOKEN_KEY = "vault_token";
 
-// 1. Универсальная функция запроса к REST-эндпоинту
+// Универсальная функция запроса к REST-эндпоинту
 async function api(path, body) {
   const token = localStorage.getItem(TOKEN_KEY);
   const headers = { "Content-Type": "application/json" };
@@ -18,12 +18,18 @@ async function api(path, body) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.detail || "Ошибка запроса к API");
+    let errorMsg = data.detail || "Ошибка запроса к API";
+    if (Array.isArray(errorMsg)) {
+      errorMsg = errorMsg.map((e) => e.msg || JSON.stringify(e)).join(", ");
+    } else if (typeof errorMsg === "object") {
+      errorMsg = JSON.stringify(errorMsg);
+    }
+    throw new Error(errorMsg);
   }
   return data;
 }
 
-// 2. Универсальная функция запроса к GraphQL-эндпоинту
+// Универсальная функция запроса к GraphQL-эндпоинту
 async function gql(query, variables = {}) {
   const token = localStorage.getItem(TOKEN_KEY);
   const headers = { "Content-Type": "application/json" };
@@ -37,226 +43,413 @@ async function gql(query, variables = {}) {
     body: JSON.stringify({ query, variables }),
   });
 
-  const result = await res.json();
+  const result = await res.json().catch(() => ({}));
   if (result.errors && result.errors.length > 0) {
     throw new Error(result.errors[0].message);
   }
   return result.data;
 }
 
-// Элементы интерфейса
-const alertBox = document.getElementById("alertBox");
-const loginBlock = document.getElementById("loginBlock");
-const profileBlock = document.getElementById("profileBlock");
-const profileEmail = document.getElementById("profileEmail");
-const userHeader = document.getElementById("userHeader");
-const userEmail = document.getElementById("userEmail");
-const loginForm = document.getElementById("loginForm");
-const logoutBtn = document.getElementById("logoutBtn");
-const createClientBtn = document.getElementById("createClientBtn");
-const clientsBlock = document.getElementById("clientsBlock");
-const clientsTableBody = document.getElementById("clientsTableBody");
-const guestNotice = document.getElementById("guestNotice");
+// Инициализация при полной загрузке DOM
+document.addEventListener("DOMContentLoaded", () => {
+  const alertBox = document.getElementById("alertBox");
+  const loginBlock = document.getElementById("loginBlock");
+  const profileBlock = document.getElementById("profileBlock");
+  const profileEmail = document.getElementById("profileEmail");
+  const userHeader = document.getElementById("userHeader");
+  const userEmail = document.getElementById("userEmail");
+  const loginForm = document.getElementById("loginForm");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const createClientBtn = document.getElementById("createClientBtn");
+  const clientsBlock = document.getElementById("clientsBlock");
+  const clientsTableBody = document.getElementById("clientsTableBody");
+  const guestNotice = document.getElementById("guestNotice");
 
-// Вспомогательный вывод уведомлений
-let alertTimeout = null;
-function showAlert(message, type = "error") {
-  if (alertTimeout) clearTimeout(alertTimeout);
-  alertBox.className = `alert alert-${type}`;
-  alertBox.textContent = message;
-  alertBox.style.display = "block";
-  alertTimeout = setTimeout(() => {
-    alertBox.style.display = "none";
-  }, 4500);
-}
+  let alertTimeout = null;
 
-// 3. Переключение видимости блоков по статусу авторизации
-function toggleAuth(isAuth, email = "") {
-  if (isAuth) {
-    loginBlock.classList.add("hidden");
-    profileBlock.classList.remove("hidden");
-    profileEmail.textContent = email;
-
-    userHeader.classList.remove("hidden");
-    userEmail.textContent = email;
-
-    clientsBlock.classList.remove("hidden");
-    createClientBtn.classList.remove("hidden");
-    guestNotice.classList.add("hidden");
-
-    loadClients();
-  } else {
-    loginBlock.classList.remove("hidden");
-    profileBlock.classList.add("hidden");
-    profileEmail.textContent = "";
-
-    userHeader.classList.add("hidden");
-    userEmail.textContent = "";
-
-    clientsBlock.classList.add("hidden");
-    createClientBtn.classList.add("hidden");
-    guestNotice.classList.remove("hidden");
-
-    clientsTableBody.innerHTML = "";
+  function showAlert(message, type = "error") {
+    if (alertTimeout) clearTimeout(alertTimeout);
+    alertBox.className = `alert alert-${type} show`;
+    alertBox.textContent = message;
+    alertTimeout = setTimeout(() => {
+      alertBox.classList.remove("show");
+    }, 5000);
   }
-}
 
-// 4. Загрузка списка клиентов через GraphQL Query
-async function loadClients() {
-  try {
-    clientsTableBody.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
-          Загрузка клиентов...
-        </td>
-      </tr>
-    `;
+  function toggleAuth(isAuth, email = "") {
+    if (isAuth) {
+      loginBlock.classList.add("hidden");
+      profileBlock.classList.remove("hidden");
+      profileEmail.textContent = email;
 
-    const data = await gql(`
-      query {
-        clients {
-          id
-          clientId
-          name
-          isConfidential
-          redirectUris
-        }
-      }
-    `);
+      userHeader.classList.remove("hidden");
+      userEmail.textContent = email;
 
-    const clients = data.clients || [];
-    if (clients.length === 0) {
+      clientsBlock.classList.remove("hidden");
+      createClientBtn.classList.remove("hidden");
+      guestNotice.classList.add("hidden");
+
+      loadClients();
+    } else {
+      loginBlock.classList.remove("hidden");
+      profileBlock.classList.add("hidden");
+      profileEmail.textContent = "";
+
+      userHeader.classList.add("hidden");
+      userEmail.textContent = "";
+
+      clientsBlock.classList.add("hidden");
+      createClientBtn.classList.add("hidden");
+      guestNotice.classList.remove("hidden");
+
+      clientsTableBody.innerHTML = "";
+    }
+  }
+
+  async function loadClients() {
+    try {
       clientsTableBody.innerHTML = `
         <tr>
           <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
-            Клиенты пока не зарегистрированы
+            Загрузка клиентов...
           </td>
         </tr>
       `;
+
+      const data = await gql(`
+        query {
+          clients {
+            id
+            clientId
+            name
+            isConfidential
+            redirectUris
+          }
+        }
+      `);
+
+      const clients = data.clients || [];
+      if (clients.length === 0) {
+        clientsTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+              Клиенты пока не зарегистрированы
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      clientsTableBody.innerHTML = clients
+        .map(
+          (c) => `
+          <tr>
+            <td>${c.id}</td>
+            <td><code>${c.clientId}</code></td>
+            <td><strong>${c.name}</strong></td>
+            <td>
+              <span class="badge ${c.isConfidential ? "badge-confidential" : "badge-public"}">
+                ${c.isConfidential ? "Confidential" : "Public"}
+              </span>
+            </td>
+            <td>${(c.redirectUris || []).join(", ") || "—"}</td>
+          </tr>
+        `
+        )
+        .join("");
+    } catch (err) {
+      showAlert(err.message, "error");
+      clientsTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; color: var(--danger); padding: 1.5rem;">
+            Не удалось загрузить данные
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  // Обработка отправки формы логина
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      console.log("[Vault Admin] Отправка формы входа...");
+      const emailInput = document.getElementById("loginEmail");
+      const passwordInput = document.getElementById("loginPassword");
+      const email = emailInput ? emailInput.value.trim() : "";
+      const password = passwordInput ? passwordInput.value : "";
+
+      if (!email || !password) {
+        showAlert("Заполните email и пароль", "error");
+        return;
+      }
+
+      try {
+        console.log(`[Vault Admin] Запрос /auth/login для ${email}...`);
+        const res = await api("/auth/login", { email, password });
+        if (!res.access_token) {
+          throw new Error("Токен авторизации не получен от сервера");
+        }
+        localStorage.setItem(TOKEN_KEY, res.access_token);
+        toggleAuth(true, email);
+        showAlert("Вход выполнен успешно", "success");
+        console.log("[Vault Admin] Вход успешен!");
+      } catch (err) {
+        console.error("[Vault Admin] Ошибка входа:", err);
+        showAlert(err.message, "error");
+      }
+    });
+  }
+
+  // Обработка кнопки выхода
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem(TOKEN_KEY);
+      toggleAuth(false);
+      showAlert("Вы вышли из системы", "success");
+    });
+  }
+
+  // Элементы модального окна создания клиента
+  const createClientModal = document.getElementById("createClientModal");
+  const createClientModalForm = document.getElementById("createClientModalForm");
+  const closeClientModalXBtn = document.getElementById("closeClientModalXBtn");
+  const cancelClientModalBtn = document.getElementById("cancelClientModalBtn");
+  const modalClientName = document.getElementById("modalClientName");
+  const modalIsConfidential = document.getElementById("modalIsConfidential");
+  const urisEmptyMsg = document.getElementById("urisEmptyMsg");
+  const urisList = document.getElementById("urisList");
+  const openAddUriPromptBtn = document.getElementById("openAddUriPromptBtn");
+
+  // Элементы всплывающего окна ввода ссылки
+  const uriPromptModal = document.getElementById("uriPromptModal");
+  const uriPromptForm = document.getElementById("uriPromptForm");
+  const closeUriPromptXBtn = document.getElementById("closeUriPromptXBtn");
+  const cancelUriPromptBtn = document.getElementById("cancelUriPromptBtn");
+  const promptUriInput = document.getElementById("promptUriInput");
+  const promptUriError = document.getElementById("promptUriError");
+
+  let currentRedirectUris = [];
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function renderUrisList() {
+    if (currentRedirectUris.length === 0) {
+      if (urisEmptyMsg) urisEmptyMsg.classList.remove("hidden");
+      if (urisList) urisList.innerHTML = "";
       return;
     }
 
-    clientsTableBody.innerHTML = clients
+    if (urisEmptyMsg) urisEmptyMsg.classList.add("hidden");
+    if (!urisList) return;
+
+    urisList.innerHTML = currentRedirectUris
       .map(
-        (c) => `
-        <tr>
-          <td>${c.id}</td>
-          <td><code>${c.clientId}</code></td>
-          <td><strong>${c.name}</strong></td>
-          <td>
-            <span class="badge ${c.isConfidential ? "badge-confidential" : "badge-public"}">
-              ${c.isConfidential ? "Confidential" : "Public"}
-            </span>
-          </td>
-          <td>${(c.redirectUris || []).join(", ") || "—"}</td>
-        </tr>
+        (uri, index) => `
+        <div class="uri-item">
+          <span class="uri-text">${escapeHtml(uri)}</span>
+          <button type="button" class="btn-circle btn-circle-remove" data-index="${index}" title="Удалить ссылку">−</button>
+        </div>
       `
       )
       .join("");
-  } catch (err) {
-    showAlert(err.message, "error");
-    clientsTableBody.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align: center; color: var(--danger); padding: 1.5rem;">
-          Не удалось загрузить данные
-        </td>
-      </tr>
-    `;
+
+    urisList.querySelectorAll(".btn-circle-remove").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        if (!isNaN(idx) && idx >= 0 && idx < currentRedirectUris.length) {
+          currentRedirectUris.splice(idx, 1);
+          renderUrisList();
+        }
+      });
+    });
   }
-}
 
-// Обработка отправки формы логина
-loginForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value;
-
-  try {
-    const res = await api("/auth/login", { email, password });
-    localStorage.setItem(TOKEN_KEY, res.access_token);
-    toggleAuth(true, email);
-    showAlert("Вход выполнен успешно", "success");
-  } catch (err) {
-    showAlert(err.message, "error");
+  function openCreateClientModal() {
+    currentRedirectUris = [];
+    if (modalClientName) modalClientName.value = "";
+    if (modalIsConfidential) modalIsConfidential.checked = false;
+    renderUrisList();
+    if (createClientModal) {
+      createClientModal.classList.remove("hidden");
+      if (modalClientName) modalClientName.focus();
+    }
   }
-});
 
-// Кнопка "Выйти" — очистка localStorage и сброс состояния
-logoutBtn.addEventListener("click", () => {
-  localStorage.removeItem(TOKEN_KEY);
-  toggleAuth(false);
-  showAlert("Вы вышли из системы", "success");
-});
+  function closeCreateClientModal() {
+    if (createClientModal) createClientModal.classList.add("hidden");
+  }
 
-// Кнопка "Создать клиента" — отправка GraphQL Mutation createClient
-createClientBtn.addEventListener("click", async () => {
-  const name = prompt("Введите имя нового OAuth-клиента:");
-  if (!name || !name.trim()) return;
+  function openUriPromptModal() {
+    if (promptUriInput) promptUriInput.value = "";
+    if (promptUriError) {
+      promptUriError.textContent = "";
+      promptUriError.classList.add("hidden");
+    }
+    if (uriPromptModal) {
+      uriPromptModal.classList.remove("hidden");
+      if (promptUriInput) promptUriInput.focus();
+    }
+  }
 
-  const urisRaw = prompt(
-    "Введите разрешенные Redirect URIs (через запятую):",
-    "http://localhost:3000/callback"
-  );
-  const redirectUris = urisRaw
-    ? urisRaw.split(",").map((s) => s.trim()).filter(Boolean)
-    : [];
+  function closeUriPromptModal() {
+    if (uriPromptModal) uriPromptModal.classList.add("hidden");
+  }
 
-  const isConfidential = confirm(
-    "Сделать клиента конфиденциальным (Confidential)?\n[ОК = Да / Отмена = Public]"
-  );
+  if (createClientBtn) {
+    createClientBtn.addEventListener("click", () => {
+      openCreateClientModal();
+    });
+  }
 
-  const mutation = `
-    mutation CreateClient($name: String!, $isConfidential: Boolean!, $redirectUris: [String!]) {
-      createClient(name: $name, isConfidential: $isConfidential, redirectUris: $redirectUris) {
-        id
-        clientId
-        name
-        isConfidential
-        redirectUris
+  if (closeClientModalXBtn) {
+    closeClientModalXBtn.addEventListener("click", closeCreateClientModal);
+  }
+
+  if (cancelClientModalBtn) {
+    cancelClientModalBtn.addEventListener("click", closeCreateClientModal);
+  }
+
+  if (createClientModal) {
+    createClientModal.addEventListener("click", (e) => {
+      if (e.target === createClientModal) closeCreateClientModal();
+    });
+  }
+
+  if (openAddUriPromptBtn) {
+    openAddUriPromptBtn.addEventListener("click", () => {
+      openUriPromptModal();
+    });
+  }
+
+  if (closeUriPromptXBtn) {
+    closeUriPromptXBtn.addEventListener("click", closeUriPromptModal);
+  }
+
+  if (cancelUriPromptBtn) {
+    cancelUriPromptBtn.addEventListener("click", closeUriPromptModal);
+  }
+
+  if (uriPromptModal) {
+    uriPromptModal.addEventListener("click", (e) => {
+      if (e.target === uriPromptModal) closeUriPromptModal();
+    });
+  }
+
+  if (uriPromptForm) {
+    uriPromptForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const val = promptUriInput ? promptUriInput.value.trim() : "";
+      if (!val) {
+        if (promptUriError) {
+          promptUriError.textContent = "Введите URL перенаправления";
+          promptUriError.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (currentRedirectUris.includes(val)) {
+        if (promptUriError) {
+          promptUriError.textContent = "Такая ссылка уже добавлена";
+          promptUriError.classList.remove("hidden");
+        }
+        return;
+      }
+
+      currentRedirectUris.push(val);
+      renderUrisList();
+      closeUriPromptModal();
+    });
+  }
+
+  if (createClientModalForm) {
+    createClientModalForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = modalClientName ? modalClientName.value.trim() : "";
+      const isConfidential = modalIsConfidential ? modalIsConfidential.checked : false;
+
+      if (!name) {
+        showAlert("Укажите имя клиента", "error");
+        return;
+      }
+
+      const mutation = `
+        mutation CreateClient($name: String!, $isConfidential: Boolean!, $redirectUris: [String!]) {
+          createClient(name: $name, isConfidential: $isConfidential, redirectUris: $redirectUris) {
+            id
+            clientId
+            name
+            isConfidential
+            redirectUris
+          }
+        }
+      `;
+
+      try {
+        console.log(`[Vault Admin] Создание клиента "${name}"...`);
+        await gql(mutation, {
+          name,
+          isConfidential,
+          redirectUris: currentRedirectUris,
+        });
+        closeCreateClientModal();
+        showAlert(`Клиент "${name}" успешно создан`, "success");
+        loadClients();
+      } catch (err) {
+        console.error("[Vault Admin] Ошибка создания клиента:", err);
+        showAlert(err.message, "error");
+      }
+    });
+  }
+
+  // Закрытие активного модального окна по нажатию Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (uriPromptModal && !uriPromptModal.classList.contains("hidden")) {
+        closeUriPromptModal();
+      } else if (createClientModal && !createClientModal.classList.contains("hidden")) {
+        closeCreateClientModal();
       }
     }
-  `;
+  });
 
-  try {
-    await gql(mutation, {
-      name: name.trim(),
-      isConfidential,
-      redirectUris,
-    });
-    showAlert(`Клиент "${name.trim()}" успешно создан`, "success");
-    loadClients();
-  } catch (err) {
-    showAlert(err.message, "error");
-  }
-});
+  // Проверка сессии при старте
+  async function checkAuthSession() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      console.log("[Vault Admin] Токен отсутствует, режим гостя");
+      toggleAuth(false);
+      return;
+    }
 
-// Восстановление сессии при обновлении страницы
-async function checkAuthSession() {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) {
-    toggleAuth(false);
-    return;
-  }
-
-  try {
-    const data = await gql(`
-      query {
-        me {
-          id
-          email
+    try {
+      console.log("[Vault Admin] Проверка валидности сохраненного токена через GraphQL query { me }...");
+      const data = await gql(`
+        query {
+          me {
+            id
+            email
+          }
         }
+      `);
+      if (data && data.me) {
+        console.log("[Vault Admin] Сессия успешно подтверждена:", data.me.email);
+        toggleAuth(true, data.me.email);
+      } else {
+        console.warn("[Vault Admin] Токен недействителен, сброс");
+        localStorage.removeItem(TOKEN_KEY);
+        toggleAuth(false);
       }
-    `);
-    if (data && data.me) {
-      toggleAuth(true, data.me.email);
-    } else {
+    } catch (err) {
+      console.warn("[Vault Admin] Ошибка проверки сессии:", err.message);
       localStorage.removeItem(TOKEN_KEY);
       toggleAuth(false);
     }
-  } catch {
-    localStorage.removeItem(TOKEN_KEY);
-    toggleAuth(false);
   }
-}
 
-document.addEventListener("DOMContentLoaded", checkAuthSession);
+  checkAuthSession();
+});
