@@ -3,7 +3,7 @@
 from typing import Any
 
 from ariadne import ObjectType
-from ariadne.types import GraphQLResolveInfo
+from ariadne.types import GraphQLResolveInfo  # type: ignore
 
 from src.models import AuditEvent, OAuthClient, User
 
