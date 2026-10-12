@@ -26,10 +26,21 @@ async def create_user(
     session: AsyncSession,
     *,
     email: str,
-    hashed_password: str,
+    hashed_password: str | None = None,
+    password: str | None = None,
+    is_admin: bool = False,
+    is_active: bool = True,
 ) -> User:
     """Создаёт пользователя."""
-    user = User(email=email, hashed_password=hashed_password)
+    from src.core.security import hash_password
+
+    final_hash = hashed_password or (hash_password(password) if password else "")
+    user = User(
+        email=email,
+        hashed_password=final_hash,
+        is_admin=is_admin,
+        is_active=is_active,
+    )
     session.add(user)
     try:
         await session.flush()

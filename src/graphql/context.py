@@ -23,7 +23,9 @@ async def get_context_value(
     Включает сессию SQLAlchemy (db, db_session), текущего пользователя
     (user, current_user) и HTTP-запрос (request).
     """
-    session: AsyncSession = async_db.session_factory()
+    session: AsyncSession = (
+        getattr(request.state, "db_session", None) or async_db.session_factory()
+    )
     request.state.db_session = session
 
     current_user: User | None = None

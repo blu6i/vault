@@ -39,7 +39,8 @@ TestingSessionLocal = async_sessionmaker(
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def verify_test_environment() -> AsyncGenerator[None]:
-    """Строго проверяет наличие базы данных и таблиц перед запуском тестов.
+    """
+    Строго проверяет наличие базы данных и таблиц перед запуском тестов.
 
     Если окружение не подготовлено пользователем явно, тесты прерываются.
     """
@@ -77,6 +78,9 @@ async def verify_test_environment() -> AsyncGenerator[None]:
 @pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession]:
     """Изолированная сессия БД на каждый тест с откатом транзакции (Savepoint)."""
+    orig_factory = async_db.session_factory
+    async_db.session_factory = TestingSessionLocal
+
     async with test_engine.connect() as connection:
         transaction = await connection.begin()
 
@@ -90,6 +94,8 @@ async def db_session() -> AsyncGenerator[AsyncSession]:
 
         await transaction.rollback()
         await session.close()
+
+    async_db.session_factory = orig_factory
 
 
 @pytest_asyncio.fixture

@@ -5,6 +5,7 @@ from pathlib import Path
 from ariadne import load_schema_from_path, make_executable_schema
 from ariadne.asgi import GraphQL
 
+from src.core.config import settings
 from src.graphql.context import get_context_value
 from src.graphql.directives import IsAdminDirective, IsAuthenticatedDirective
 from src.graphql.resolvers import mutation, query
@@ -41,5 +42,5 @@ schema = make_executable_schema(
 graphql_app = GraphQL(
     schema,
     context_value=get_context_value,
-    debug=True,
+    debug=settings.debug,
 )

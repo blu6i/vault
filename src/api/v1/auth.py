@@ -85,7 +85,7 @@ async def login(
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверные данные для входа.",
+            detail="Invalid credentials",
         )
     is_valid_pass = await asyncio.to_thread(
         verify_password, credentials.password, user.hashed_password
@@ -102,7 +102,7 @@ async def login(
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверные данные для входа.",
+            detail="Invalid credentials",
         )
 
     access_token = create_access_token(user.id)
