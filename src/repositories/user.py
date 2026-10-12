@@ -10,16 +10,35 @@ from src.models import User
 
 def _is_email_unique_violation(error: IntegrityError) -> bool:
     """Проверяет, вызвана ли ошибка ограничением уникальности email."""
-    original_error = error.orig
-    constraint_name = getattr(
-        getattr(original_error, "diag", None),
-        "constraint_name",
-        None,
-    )
-    if constraint_name == "ix_users_email":
+    orig = getattr(error, "orig", None)
+
+    # 1. asyncpg (driver_exception.constraint_name)
+    driver_exc = getattr(orig, "driver_exception", None)
+    if driver_exc is not None:
+        constraint = getattr(driver_exc, "constraint_name", None)
+        if constraint and "ix_users_email" in constraint:
+            return True
+
+    # 2. psycopg2 (orig.diag.constraint_name)
+    diag = getattr(orig, "diag", None)
+    if diag is not None:
+        constraint = getattr(diag, "constraint_name", None)
+        if constraint and "ix_users_email" in constraint:
+            return True
+
+    # 3. Прямой constraint_name у оригинальной ошибки
+    constraint = getattr(orig, "constraint_name", None)
+    if constraint and "ix_users_email" in constraint:
         return True
 
-    return "unique constraint failed: users.email" in str(original_error).lower()
+    # 4. Текстовый поиск в тексте ошибки (SQLite, asyncpg message, etc.)
+    err_str = str(error).lower()
+    return (
+        "ix_users_email" in err_str
+        or "unique constraint failed: users.email" in err_str
+        or "users_email_key" in err_str
+        or "users.email" in err_str
+    )
 
 
 async def create_user(

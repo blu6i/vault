@@ -54,6 +54,26 @@ async def test_register_success(
 
 
 @pytest.mark.asyncio
+async def test_register_duplicate_email_returns_409(client: AsyncClient) -> None:
+    """Проверяет ошибку 409 Conflict при повторной регистрации email."""
+    email = "duplicate_check@example.com"
+    password = "MyComplexPassword123!"
+
+    res1 = await client.post(
+        "/auth/register",
+        json={"email": email, "password": password},
+    )
+    assert res1.status_code in (200, 201)
+
+    res2 = await client.post(
+        "/auth/register",
+        json={"email": email, "password": password},
+    )
+    assert res2.status_code == 409
+    assert "уже зарегистрирован" in res2.json().get("detail", "")
+
+
+@pytest.mark.asyncio
 async def test_login_invalid_credentials_returns_401(client: AsyncClient) -> None:
     """
     Проверяет ошибку 401 при неверных учетных данных.

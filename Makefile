@@ -97,7 +97,7 @@ test:
 .PHONY: test-db-init
 test-db-init:
 	@echo "Создание тестовой базы данных PostgreSQL..."
-	docker compose exec postgres psql -U $${DB__POSTGRES_USER:-admin} -c "CREATE DATABASE $${DB__POSTGRES_DB:-app}_test;" || true
+	docker compose exec postgres psql -U $${DB__POSTGRES_USER:-admin} -d $${DB__POSTGRES_DB:-app} -c "CREATE DATABASE $${DB__POSTGRES_DB:-app}_test;" || true
 	docker compose exec -e DB__POSTGRES_DB=$${DB__POSTGRES_DB:-app}_test app alembic upgrade head
 	@echo "Тестовая база данных готова к тестам."
 
