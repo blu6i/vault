@@ -117,7 +117,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "vault"
-    debug: bool = False
+    debug: bool = True
     app_env: str = "dev"
 
     db: DBSettings
